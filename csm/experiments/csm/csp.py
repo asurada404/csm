@@ -232,7 +232,14 @@ class CSPTrainer(train_utils.Trainer):
 
         points3d, verts_local_feature = geom_utils.project_uv_to_3d(self.uv2points, codes_pred['uv_map'], codes_pred['local_feature'])
         print("----csp, verts_local_feature shape: ", verts_local_feature.shape)
+        # attach local feature to verts
+        codes_pred["verts_local_feature"] = verts_local_feature
         codes_pred['points_3d'] = points3d.view(b_size, self.upsample_img_size[0], self.upsample_img_size[1], 3)
+        
+        # attach local feature to points
+        points_3d_local_feature = codes_pred['local_feature'].view(b_size, self.upsample_img_size[0], self.upsample_img_size[1], 3)
+        codes_pred["points_3d_local_feature"] = points_3d_local_feature
+
         if opts.use_gt_quat and opts.pred_cam:
             codes_pred['cam'] = torch.cat([codes_pred['cam'][:,0:3], self.codes_gt['cam'][:,3:7]], dim=1)
         else:
