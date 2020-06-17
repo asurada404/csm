@@ -370,4 +370,6 @@ class ICPNet(nn.Module):
         return_stuff['cam'] = cam
         return_stuff['uv_map'] = uv_map
         return_stuff['uv_map_3d'] = uv_map_3d
+        return_stuff['local_feature'] =  local_feature
+        return_stuff['resize_ans'] = resize_ans
         return return_stuff
