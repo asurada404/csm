@@ -84,9 +84,60 @@ class UVTo3D(nn.Module):
         barycentric_coordinates = torch.nn.functional.normalize(barycentric_coordinates, p=1)
         return barycentric_coordinates
 
+    def group_local_feature2(self, verts_index, local_feature):
+        """
+        group local_feature having same vertices index
+        """
+        num_verts = local_feature.shape[0]
+        M = torch.zeros(642, num_verts).to("cuda") # replace 642 with the number of vertices in template shape
+        M[verts_index, torch.arange(num_verts)] = 1
+        M = torch.nn.functional.normalize(M, p=1, dim=1)
+        print("----cub_parse M shape:", M.shape)
+        verts_local_feature = torch.mm(M, local_feature)
+        print("----cub_parse verts_local_feature shape:", verts_local_feature.shape)
+        return verts_local_feature
+
+    def group_local_feature(self, verts_index, local_feature):
+        num_verts = local_feature.shape[0]
+        result = torch.zeros((642, local_feature.shape[1]), dtype = local_feature.dtype).to("cuda")
+        print("----cub_parse result shape:", result.shape)
+        print("----cub_parse verts_index shape:", verts_index.shape)
+        print("----cub_parse local_feature shape:", local_feature.shape)
+        
+
+        result.index_add_(0, verts_index, local_feature)
+        print("----cub_parse result shape:", result.shape)
+        x = verts_index
+        #x_unique = x.unique(sorted=True)
+        x_unique = torch.arange( 0, 642, dtype=torch.long).to("cuda")
+        x_unique_count = torch.stack([(x==x_u).sum() for x_u in x_unique]).type('torch.cuda.FloatTensor')
+
+        print("----cub_parse result shape:", result.shape)
+        result /= x_unique_count[:,None]
+        return result
+        
+
+    def add_local_feature_to_verts(self, local_feature, face_vert_inds):
+        """
+        attach local feature to vertices of face
+        """
+        verts_index_stack = torch.cat([face_vert_inds[:, 0], face_vert_inds[:, 1], face_vert_inds[:, 2]], dim = 0)
+        local_feature_stack = torch.cat([local_feature, local_feature, local_feature], dim = 0)
+        verts_local_feature = self.group_local_feature(verts_index_stack, local_feature_stack)
+        # va_index = face_vert_inds[:, 0]
+        # vb_index = face_vert_inds[:, 1] 
+        # vc_index = face_vert_inds[:, 2]
+        # va_local_feature, va_counts = self.group_local_feature(va_index, local_feature)
+        # vb_local_feature, vb_counts = self.group_local_feature(vb_index, local_feature)
+        # vc_local_feature, vc_counts = self.group_local_feature(vc_index, local_feature)
+        # all_counts = va_counts + vb_counts + vb_counts
+
+        # verts_local_feature = (va_local_feature + vb_local_feature + vc_local_feature)/ all_counts[:,None]
+       
+        return verts_local_feature
 
 
-    def forward(self, uv):
+    def forward(self, uv, local_feature):
         mean_shape = self.mean_shape
         uv_map_size = torch.Tensor([mean_shape['uv_map'].shape[1]-1, mean_shape['uv_map'].shape[0] -1]).view(1,2)
         print("--- cub_parse uv_map_size shape: ", uv_map_size.shape)
@@ -117,7 +168,19 @@ class UVTo3D(nn.Module):
         print("--- cub_parse points3d shape: ", points3d.shape)
         points3d = points3d.sum(1)
         print("--- cub_parse points3d shape: ", points3d.shape)
-        return points3d
+
+        # compute local feature
+        B = local_feature.shape[0]
+        face_vert_inds = face_vert_inds.view(B, -1, 3)
+        verts_local_feature_batch = []
+
+        for i in range(B):
+            verts_local_feature = self.add_local_feature_to_verts(local_feature[i], face_vert_inds[i])
+            verts_local_feature_batch.append(verts_local_feature)
+        verts_local_feature_batch = torch.stack(verts_local_feature_batch)
+        print("--- cub_parse verts_local_feature_batch shape: ", verts_local_feature_batch.shape)
+
+        return points3d, verts_local_feature_batch
 
     def set_3d_verts(self, verts_3d, verts_uv=None):
         assert verts_3d.shape == self.verts_3d.shape, 'shape does not match'

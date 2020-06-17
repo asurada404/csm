@@ -29,14 +29,19 @@ def compute_distance_in_uv_sapce(uv1, uv2):
 B x H x W x 2
 '''
 
-def project_uv_to_3d(uv2points, uv_map):
+def project_uv_to_3d(uv2points, uv_map, local_feature):
     B = uv_map.size(0)
     H = uv_map.size(1)
     W = uv_map.size(2)
     uv_map_flatten = uv_map.view(-1, 2)
-    points3d = uv2points.forward(uv_map_flatten)
+    num_channels = local_feature.shape[1]
+    local_feature_flatten = local_feature.view(B,-1,num_channels)
+    print("----geom_utils local_feature_flatten shape: ", local_feature_flatten.shape)
+    points3d, verts_local_feature_batch = uv2points.forward(uv_map_flatten, local_feature_flatten)
     points3d = points3d.view(B, H*W, 3)
-    return points3d
+
+    verts_local_feature = verts_local_feature_batch.view(B, 642, num_channels)
+    return points3d, verts_local_feature
 
 def project_3d_to_image(points3d, cam, offset_z):
     projected_points = orthographic_proj_withz(points3d, cam, offset_z)

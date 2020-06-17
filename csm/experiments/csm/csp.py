@@ -230,9 +230,9 @@ class CSPTrainer(train_utils.Trainer):
         self.codes_gt['mask'] = mask
         self.codes_gt['xy_map'] = grid
 
-        points3d = geom_utils.project_uv_to_3d(self.uv2points, codes_pred['uv_map'])
+        points3d, verts_local_feature = geom_utils.project_uv_to_3d(self.uv2points, codes_pred['uv_map'], codes_pred['local_feature'])
+        print("----csp, verts_local_feature shape: ", verts_local_feature.shape)
         codes_pred['points_3d'] = points3d.view(b_size, self.upsample_img_size[0], self.upsample_img_size[1], 3)
-
         if opts.use_gt_quat and opts.pred_cam:
             codes_pred['cam'] = torch.cat([codes_pred['cam'][:,0:3], self.codes_gt['cam'][:,3:7]], dim=1)
         else:
