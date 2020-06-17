@@ -89,22 +89,34 @@ class UVTo3D(nn.Module):
     def forward(self, uv):
         mean_shape = self.mean_shape
         uv_map_size = torch.Tensor([mean_shape['uv_map'].shape[1]-1, mean_shape['uv_map'].shape[0] -1]).view(1,2)
+        print("--- cub_parse uv_map_size shape: ", uv_map_size.shape)
         uv_map_size = uv_map_size.type(uv.type())
+        print("--- cub_parse uv_map_size shape: ", uv_map_size.shape)
         uv_inds = (uv_map_size * uv).round().long().detach()
+        print("--- cub_parse uv_inds shape: ", uv_inds.shape)
         if torch.max(uv_inds) > 1000  or torch.min(uv_inds) < 0:
             print('Error in indexing')
             pdb.set_trace()
         face_inds = mean_shape['face_inds'][uv_inds[:,1], uv_inds[:,0]] 
+        print("--- cub_parse face_inds shape: ", face_inds.shape)
         ## remember this. swaped on purpose. U is along the columns, V is along the rows
         face_vert_inds = mean_shape['faces'][face_inds,:]
+        print("--- cub_parse face_vert_inds shape: ", face_vert_inds.shape)
         verts =  self.verts_3d 
+        print("--- cub_parse verts shape: ", verts.shape)
         uv_verts = self.verts_uv
+        print("--- cub_parse uv_verts shape: ", uv_verts.shape)
         face_verts = torch.stack([verts[face_vert_inds[:,0]], verts[face_vert_inds[:,1]], verts[face_vert_inds[:,2]]], dim=1)
+        print("--- cub_parse face_verts shape: ", face_verts.shape)
         face_uv_verts = torch.stack([uv_verts[face_vert_inds[:,0]], uv_verts[face_vert_inds[:,1]], uv_verts[face_vert_inds[:,2]]], dim=1)
+        print("--- cub_parse face_uv_verts shape: ", face_uv_verts.shape)
         bary_cord = self.compute_barycentric_coordinates(face_uv_verts, uv)
+        print("--- cub_parse bary_cord shape: ", bary_cord.shape)
         # bary_cord = mean_shape['bary_cord'][uv_inds[:,0], uv_inds[:,1]]
         points3d = face_verts * bary_cord[:, :, None]
+        print("--- cub_parse points3d shape: ", points3d.shape)
         points3d = points3d.sum(1)
+        print("--- cub_parse points3d shape: ", points3d.shape)
         return points3d
 
     def set_3d_verts(self, verts_3d, verts_uv=None):
