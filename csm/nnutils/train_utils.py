@@ -28,7 +28,7 @@ flags.DEFINE_float('learning_rate', 0.0001, 'learning rate')
 flags.DEFINE_float('beta1', 0.9, 'Momentum term of adam')
 flags.DEFINE_bool('use_sgd', False, 'if true uses sgd instead of adam, beta1 is used as mmomentum')
 
-flags.DEFINE_integer('batch_size', 7, 'Size of minibatches')
+flags.DEFINE_integer('batch_size', 3, 'Size of minibatches')
 flags.DEFINE_integer('num_iter', 0, 'Number of training iterations. 0 -> Use epoch_iter')
 flags.DEFINE_integer('n_data_workers', 4, 'Number of data loading workers')
 
