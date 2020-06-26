@@ -13,6 +13,8 @@ import pdb
 from absl import flags
 from ..utils.visualizer import Visualizer
 
+import datetime
+
 #-------------- flags -------------#
 #----------------------------------#
 ## Flags for training
@@ -34,7 +36,9 @@ flags.DEFINE_integer('n_data_workers', 4, 'Number of data loading workers')
 
 
 ## Flags for logging and snapshotting
-flags.DEFINE_string('checkpoint_dir', osp.join(cache_path, 'snapshots'),
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M")
+checkpoint_dir = "snapshots" + timestamp
+flags.DEFINE_string('checkpoint_dir', osp.join(cache_path, checkpoint_dir),
                     'Root directory for output files')
 flags.DEFINE_integer('print_freq', 20, 'scalar logging frequency')
 flags.DEFINE_integer('save_latest_freq', 1000, 'save latest model every x iterations')
@@ -65,6 +69,7 @@ class Trainer():
         self.gpu_id = opts.gpu_id
         self.Tensor = torch.cuda.FloatTensor if (self.gpu_id is not None) else torch.Tensor
         self.invalid_batch = False #the trainer can optionally reset this every iteration during set_input call
+        
         self.save_dir = os.path.join(opts.checkpoint_dir, opts.name)
         self.device = 'cuda:{}'.format(opts.gpu_id)
         self.cam_location = [0, 0, -2.732]
