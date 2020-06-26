@@ -11,7 +11,7 @@ import pdb
 from . import visutil
 from absl import flags
 # server = 'http://nileshk.pc.cs.cmu.edu'
-server = 'http://compute-2-1.local'
+server = 'localhost'
 flags.DEFINE_boolean('use_html', True, 'Save html visualizations')
 flags.DEFINE_string('env_name', 'main', 'env name for experiments')
 flags.DEFINE_integer('display_id', 1, 'Display Id')
