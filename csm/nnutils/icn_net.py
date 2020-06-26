@@ -306,7 +306,7 @@ class ICPNet(nn.Module):
 
         self.unet_gen = unet.UnetConcatGenerator(input_nc=3, output_nc=(
             self.unet_oc), num_downs=5,)
-        self.unet_innermost = self.unet_gen.get_inner_most()
+        #self.unet_innermost = self.unet_gen.get_inner_most()
         self.img_encoder = Encoder((opts.img_size, opts.img_size), nz_feat=opts.nz_feat)
 
         self.grid = cub_parse.get_sample_grid((opts.img_size,opts.img_size)).cuda()
