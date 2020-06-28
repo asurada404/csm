@@ -327,7 +327,9 @@ class ICPNet(nn.Module):
         return_stuff = {}
         
         img = feats['img']
-        unet_output = self.unet_gen.forward(img)
+        global_feature, u5, u4, u3, u2, u1 = self.unet_gen.forward(img)
+        unet_output = u1
+        print("global_feature shape,", global_feature.shape)
         img_feat = self.img_encoder.forward(img)
         uv_map  = unet_output[:, 0:self.uv_pred_dim, :, :]
         mask = torch.sigmoid(unet_output[:, self.uv_pred_dim:, :, :])
